@@ -9,9 +9,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Created by jt on 2019-06-09.
- */
 @ConfigurationProperties(prefix = "sfg.brewery", ignoreUnknownFields = false)
 @Service
 public class BeerServiceImpl implements BeerService {
@@ -19,12 +16,17 @@ public class BeerServiceImpl implements BeerService {
     public final String BEER_UPC_PATH_V1 = "/api/v1/beerUpc/";
     private final RestTemplate restTemplate;
 
+    // we are using config properties, sfg.brewery.beer-service-host=http://localhost:8080 
     private String beerServiceHost;
+    
+    public void setBeerServiceHost(String beerServiceHost) {
+        this.beerServiceHost = beerServiceHost;
+    }
 
     public BeerServiceImpl(RestTemplateBuilder restTemplateBuilder) {
         this.restTemplate = restTemplateBuilder.build();
     }
-
+// making rest calls
     @Override
     public Optional<BeerDto> getBeerById(UUID uuid){
         return Optional.of(restTemplate.getForObject(beerServiceHost + BEER_PATH_V1 + uuid.toString(), BeerDto.class));
@@ -35,7 +37,4 @@ public class BeerServiceImpl implements BeerService {
         return Optional.of(restTemplate.getForObject(beerServiceHost + BEER_UPC_PATH_V1 + upc, BeerDto.class));
     }
 
-    public void setBeerServiceHost(String beerServiceHost) {
-        this.beerServiceHost = beerServiceHost;
-    }
 }

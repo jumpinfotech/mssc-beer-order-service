@@ -9,9 +9,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.util.Optional;
 
-/**
- * Created by jt on 2019-06-09.
- */
 public abstract class BeerOrderLineMapperDecorator implements BeerOrderLineMapper {
 
     private BeerService beerService;
@@ -32,7 +29,7 @@ public abstract class BeerOrderLineMapperDecorator implements BeerOrderLineMappe
     public BeerOrderLineDto beerOrderLineToDto(BeerOrderLine line) {
         BeerOrderLineDto orderLineDto = beerOrderLineMapper.beerOrderLineToDto(line);
         Optional<BeerDto> beerDtoOptional = beerService.getBeerByUpc(line.getUpc());
-
+// if beerService returns us a BeerDto then enhance the orderLineDto
         beerDtoOptional.ifPresent(beerDto -> {
             orderLineDto.setBeerName(beerDto.getBeerName());
             orderLineDto.setBeerStyle(beerDto.getBeerStyle());

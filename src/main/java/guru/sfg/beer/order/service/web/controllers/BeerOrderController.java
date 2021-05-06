@@ -1,20 +1,3 @@
-/*
- *  Copyright 2019 the original author or authors.
- *
- * This program is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU General Public License as published by
- *     the Free Software Foundation, either version 3 of the License, or
- *     (at your option) any later version.
- *
- *     This program is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU General Public License for more details.
- *
- *     You should have received a copy of the GNU General Public License
- *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package guru.sfg.beer.order.service.web.controllers;
 
 import guru.sfg.beer.order.service.services.BeerOrderService;
@@ -39,6 +22,9 @@ public class BeerOrderController {
         this.beerOrderService = beerOrderService;
     }
 
+//    changes on each start:- Tasting Room Customer Id: 40103ec3-eb39-4e6d-94f2-599965bb58a3
+//    it creates orders and saves them
+//    GET http://localhost:8081/api/v1/customers/40103ec3-eb39-4e6d-94f2-599965bb58a3/orders
     @GetMapping("orders")
     public BeerOrderPagedList listOrders(@PathVariable("customerId") UUID customerId,
                                          @RequestParam(value = "pageNumber", required = false) Integer pageNumber,

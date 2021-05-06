@@ -33,11 +33,12 @@ public class TastingRoomService {
 
         beerUpcs.add(BeerOrderBootStrap.BEER_1_UPC);
         beerUpcs.add(BeerOrderBootStrap.BEER_2_UPC);
-        beerUpcs.add(BeerOrderBootStrap.BEER_3_UPC);
+        beerUpcs.add(BeerOrderBootStrap.BEER_3_UPC); // using beer upc's, modification to monolith 
     }
 
     @Transactional
-    @Scheduled(fixedRate = 2000) //run every 2 seconds
+    @Scheduled(fixedRate = 2000) //run every 2 seconds using spring scheduler>saves a new beer order with random data>
+    // simulates tasting room pouring Beers>draws down inventory>we brew beer to replenish inventory
     public void placeTastingRoomOrder(){
 
         List<Customer> customerList = customerRepository.findAllByCustomerNameLike(BeerOrderBootStrap.TASTING_ROOM);
@@ -56,7 +57,6 @@ public class TastingRoomService {
                 .upc(beerToOrder)
                 .orderQuantity(new Random().nextInt(6)) //todo externalize value to property
                 .build();
-
         List<BeerOrderLineDto> beerOrderLineSet = new ArrayList<>();
         beerOrderLineSet.add(beerOrderLine);
 
@@ -66,6 +66,7 @@ public class TastingRoomService {
                 .beerOrderLines(beerOrderLineSet)
                 .build();
 
+        // take a random upc + random quantity>build a beer order + place order with service
         BeerOrderDto savedOrder = beerOrderService.placeOrder(customer.getId(), beerOrder);
 
     }
