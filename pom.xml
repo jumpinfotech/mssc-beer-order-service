@@ -6,6 +6,7 @@
     <parent>
         <groupId>com.github.sfg-beer-works</groupId>
         <artifactId>sfg-brewery-bom</artifactId>
+        <!-- updated version from 1.0.7 to 1.0.11 -->
         <version>1.0.11</version>
     </parent>
 

@@ -51,6 +51,12 @@ public class BeerOrderDto {
     private UUID customerId;
     private String customerRef;
     private List<BeerOrderLineDto> beerOrderLines;
+
+    // Had a build error - orderStatus type was OrderStatusEnum, we make orderStatus a String + we have deleted(safe delete) OrderStatusEnum from model package.
+    // The BeerOrderDto is exposed to the web tier, orderStatus is now a String - some would argue it should be an enum. 
+    // In Spring after validation, unexpected string values can be handled better inside the controller + you can respond better to the client.
+    // We also don't need to have enumeration on the model to be kept in sync - 
+    // now we have a string and we no longer have the external DTO model tied to our internal model - the 2 are decoupled.
     private String orderStatus;
     private String orderStatusCallbackUrl;
 }

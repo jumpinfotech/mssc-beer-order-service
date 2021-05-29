@@ -26,16 +26,18 @@ import java.util.UUID;
 public class ValidateOrderAction implements Action<BeerOrderStatusEnum, BeerOrderEventEnum> {
 
     private final BeerOrderRepository beerOrderRepository;
-    private final BeerOrderMapper beerOrderMapper;
+    private final BeerOrderMapper beerOrderMapper; // used BOMap ctrl+space to find type quickly>then ctrl+space to generate field name
     private final JmsTemplate jmsTemplate;
 
     @Override
     public void execute(StateContext<BeerOrderStatusEnum, BeerOrderEventEnum> context) {
         String beerOrderId = (String) context.getMessage().getHeaders().get(BeerOrderManagerImpl.ORDER_ID_HEADER);
+        // fetch BeerOrder from the database
         BeerOrder beerOrder = beerOrderRepository.findOneById(UUID.fromString(beerOrderId));
 
+        // put on JMS queue to the VALIDATE_ORDER_QUEUE destination>decoupled, not concerned about the response yet
         jmsTemplate.convertAndSend(JmsConfig.VALIDATE_ORDER_QUEUE, ValidateOrderRequest.builder()
-                    .beerOrder(beerOrderMapper.beerOrderToDto(beerOrder))
+                    .beerOrder(beerOrderMapper.beerOrderToDto(beerOrder)) // convert to BeerOrderDto
                     .build());
 
         log.debug("Sent Validation request to queue for order id " + beerOrderId);

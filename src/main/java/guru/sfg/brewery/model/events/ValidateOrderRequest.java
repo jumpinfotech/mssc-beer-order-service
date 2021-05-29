@@ -13,7 +13,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ValidateOrderRequest {
+// simple POJO created will be used in ValidateOrderAction> will be sent into JMS queue as JSON payload
+public class ValidateOrderRequest { 
 
     private BeerOrderDto beerOrder;
 }

@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+// copied from project mssc-beer-inventory-service, 
+// it's the same Object + same path, this helps with the Spring auto de/serialization 
 public class AllocateOrderResult {
     private BeerOrderDto beerOrderDto;
     private Boolean allocationError = false;

@@ -27,15 +27,20 @@ public class BeerOrderStateChangeInterceptor extends StateMachineInterceptorAdap
 
     private final BeerOrderRepository beerOrderRepository;
 
+    // if the state changes this interceptor will be called
     @Override
     public void preStateChange(State<BeerOrderStatusEnum, BeerOrderEventEnum> state, Message<BeerOrderEventEnum> message, Transition<BeerOrderStatusEnum, BeerOrderEventEnum> transition, StateMachine<BeerOrderStatusEnum, BeerOrderEventEnum> stateMachine) {
         Optional.ofNullable(message)
+                // from the message we want the order id header
                 .flatMap(msg -> Optional.ofNullable((String) msg.getHeaders().getOrDefault(BeerOrderManagerImpl.ORDER_ID_HEADER, " ")))
-                .ifPresent(orderId -> {
+                .ifPresent(orderId -> { // get orderId
                     log.debug("Saving state for order id: " + orderId + " Status: " + state.getId());
 
+                    // get beer order out of repository
                     BeerOrder beerOrder = beerOrderRepository.getOne(UUID.fromString(orderId));
                     beerOrder.setOrderStatus(state.getId());
+                    // we are working with a relational database through JDBC - Spring Data JPA, 
+                    // hibernate does a lazy write by default in tight timing a saveAndFlush forces it to go to the database immediately
                     beerOrderRepository.saveAndFlush(beerOrder);
                 });
     }

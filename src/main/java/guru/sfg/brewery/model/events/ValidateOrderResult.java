@@ -14,6 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+// copied + pasted from mssc-beer-service project 
 public class ValidateOrderResult {
     private UUID orderId;
     private Boolean isValid;

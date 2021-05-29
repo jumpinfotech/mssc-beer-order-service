@@ -28,11 +28,15 @@ public class AllocateOrderAction implements Action<BeerOrderStatusEnum, BeerOrde
     private final BeerOrderRepository beerOrderRepository;
     private final BeerOrderMapper beerOrderMapper;
 
+    // this is our action which the state machine requests>we get the BeerOrder out of the repository 
+    // then do a JMS template convertAndSend + send the allocation request off to the ALLOCATE_ORDER_QUEUE JMS queue
     @Override
-    public void execute(StateContext<BeerOrderStatusEnum, BeerOrderEventEnum> context) {
+    public void execute(StateContext<BeerOrderStatusEnum, BeerOrderEventEnum> context) { // receive the state machine context
         String beerOrderId = (String) context.getMessage().getHeaders().get(BeerOrderManagerImpl.ORDER_ID_HEADER);
+        // fetch a BeerOrder from the database
         BeerOrder beerOrder = beerOrderRepository.findOneById(UUID.fromString(beerOrderId));
 
+        // convert that order to DTO + send it to the ALLOCATE_ORDER_QUEUE inside of JMS
         jmsTemplate.convertAndSend(JmsConfig.ALLOCATE_ORDER_QUEUE,
                 beerOrderMapper.beerOrderToDto(beerOrder));
 

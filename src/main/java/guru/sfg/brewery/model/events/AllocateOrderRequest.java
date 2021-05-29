@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+// same as ValidateOrderRequest, it's bad practise to use same object though, hence this new 'duplicating' class
 public class AllocateOrderRequest {
     private BeerOrderDto beerOrderDto;
 }
