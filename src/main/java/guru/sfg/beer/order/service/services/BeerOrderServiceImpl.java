@@ -72,7 +72,8 @@ public class BeerOrderServiceImpl implements BeerOrderService {
     public BeerOrderDto placeOrder(UUID customerId, BeerOrderDto beerOrderDto) {
         Optional<Customer> customerOptional = customerRepository.findById(customerId);
 
-        if (customerOptional.isPresent()) {
+        // probably a cleaner way to write this code, he tried + backtracked - it still works
+        if (customerOptional.isPresent()) { 
             BeerOrder beerOrder = beerOrderMapper.dtoToBeerOrder(beerOrderDto);
             beerOrder.setId(null); //should not be set by outside client
             beerOrder.setCustomer(customerOptional.get());
@@ -80,6 +81,8 @@ public class BeerOrderServiceImpl implements BeerOrderService {
 
             beerOrder.getBeerOrderLines().forEach(line -> line.setBeerOrder(beerOrder));
 
+            // BeerOrderManager is working with the state machine, 
+            // previously we were saving here directly into BeerOrderRepository
             BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
 
             log.debug("Saved Beer Order: " + beerOrder.getId());
@@ -97,6 +100,9 @@ public class BeerOrderServiceImpl implements BeerOrderService {
 
     @Override
     public void pickupOrder(UUID customerId, UUID orderId) {
+        // BeerOrderManager is working with the state machine, 
+        // previously we were saving directly into BeerOrderRepository
+        // Integration tests are missing for this service layer.
         beerOrderManager.beerOrderPickedUp(orderId);
     }
 

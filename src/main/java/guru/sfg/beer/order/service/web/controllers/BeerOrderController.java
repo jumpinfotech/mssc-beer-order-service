@@ -55,6 +55,8 @@ public class BeerOrderController {
         return beerOrderService.listOrders(customerId, PageRequest.of(pageNumber, pageSize));
     }
 
+    // Our BeerOrderService (which backs up the controllers) was using the database directly + not using the configured Spring State Machine.
+    // The BeerOrderManager will manage the order through the BeerOrderService - placeOrder + pickupOrder are the 2 entrypoints.
     @PostMapping("orders")
     @ResponseStatus(HttpStatus.CREATED)
     public BeerOrderDto placeOrder(@PathVariable("customerId") UUID customerId, @RequestBody BeerOrderDto beerOrderDto){

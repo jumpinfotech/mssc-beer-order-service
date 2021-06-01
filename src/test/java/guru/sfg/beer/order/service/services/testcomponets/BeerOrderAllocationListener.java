@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @RequiredArgsConstructor
 @Component
+// a test listener component for allocation requests
 public class BeerOrderAllocationListener {
 
     private final JmsTemplate jmsTemplate;
@@ -24,6 +25,7 @@ public class BeerOrderAllocationListener {
     public void listen(Message msg){
         AllocateOrderRequest request = (AllocateOrderRequest) msg.getPayload();
 
+        // here we fake a full allocation, QuantityAllocated = OrderQuantity
         request.getBeerOrderDto().getBeerOrderLines().forEach(beerOrderLineDto -> {
             beerOrderLineDto.setQuantityAllocated(beerOrderLineDto.getOrderQuantity());
         });

@@ -22,6 +22,10 @@ public class JmsConfig {
         MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
         converter.setTargetType(MessageType.TEXT);
         converter.setTypeIdPropertyName("_type");
+        // Error: Failed to convert JSON message content ... Cannot construct instance of 'java.time.OffsetDateTime'>
+        // a Jackson serialization problem
+        // Solution: the Spring configured Jackson ObjectMapper is passed into this method +
+        // in this converter that we are returning to the Spring session will be that ObjectMapper.
         converter.setObjectMapper(objectMapper);
         return converter;
     }

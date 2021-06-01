@@ -28,6 +28,11 @@ public class BeerOrderStateChangeInterceptor extends StateMachineInterceptorAdap
 
     private final BeerOrderRepository beerOrderRepository;
 
+    // org.hibernate.LazyInitializationException: could not initialize proxy - problem with the Hibernate session.
+    // With these lazy initialization errors, you need to remember how the Spring transactions work - 
+    // we are working with a Hibernate object outside of a transaction.
+    // We add @Transactional here on preStateChange( , however the error remains - 
+    // so @Transactional is added to BeerOrderManagerImpl.processValidationResult, seems high up the stacktrace - but fixes this issue
     @Transactional
     @Override
     public void preStateChange(State<BeerOrderStatusEnum, BeerOrderEventEnum> state, Message<BeerOrderEventEnum> message, Transition<BeerOrderStatusEnum, BeerOrderEventEnum> transition, StateMachine<BeerOrderStatusEnum, BeerOrderEventEnum> stateMachine) {

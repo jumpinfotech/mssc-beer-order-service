@@ -44,11 +44,16 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         return savedBeerOrder;
     }
 
+    // org.hibernate.LazyInitializationException: could not initialize proxy - problem with the Hibernate session.
+    // @Transactional added to fix this.
     @Transactional
     @Override
     public void processValidationResult(UUID beerOrderId, Boolean isValid) {
         log.debug("Process Validation Result for beerOrderId: " + beerOrderId + " Valid? " + isValid);
 
+        // getOne(beerOrderId) appeared to be working>it gives you a reference with an ID property. 
+        // But it kind of lazy loads that object> when you try to access the properties - you'll get an exception if it's not found. 
+        // Causes debugging issues don't use it unless you really understand it's functionality. So using findById(beerOrderId) instead.
         Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrderId);
 
         beerOrderOptional.ifPresentOrElse(beerOrder -> {
@@ -62,7 +67,8 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
             } else {
                 sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.VALIDATION_FAILED);
             }
-        }, () -> log.error("Order Not Found. Id: " + beerOrderId));
+        // log error if there's a problem
+        }, () -> log.error("Order Not Found. Id: " + beerOrderId)); 
 
     }
 
@@ -71,7 +77,10 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrderDto.getId());
 
         beerOrderOptional.ifPresentOrElse(beerOrder -> {
+            // we send a BeerOrderEvent that is going to the state machine
+            // the state machine saves the state of the order > this happens in a different thread - that is beating it - not sure what this means??
             sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.ALLOCATION_SUCCESS);
+            // then we update the allocated quantity
             updateAllocatedQty(beerOrderDto);
         }, () -> log.error("Order Id Not Found: " + beerOrderDto.getId() ));
     }
@@ -89,6 +98,8 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     }
 
     private void updateAllocatedQty(BeerOrderDto beerOrderDto) {
+        // we get the BeerOrder - allocatedOrderOptional, 
+        // originally we were taking in the BeerOrder in this method then mistakenly saving it, instead of saving allocatedOrder
         Optional<BeerOrder> allocatedOrderOptional = beerOrderRepository.findById(beerOrderDto.getId());
 
         allocatedOrderOptional.ifPresentOrElse(allocatedOrder -> {
@@ -100,6 +111,9 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
                 });
             });
 
+            // Error: Caused by: org.springframework.orm.ObjectOptimisticLockingFailureException: 
+            // Object of class [guru.sfg.beer.order.service.domain.BeerOrder] with identifier
+            // Meaning: We have an object that's getting updated before we save it.
             beerOrderRepository.saveAndFlush(allocatedOrder);
         }, () -> log.error("Order Not Found. Id: " + beerOrderDto.getId()));
     }
@@ -114,12 +128,13 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
 
     }
 
+    // alt+insert>implement methods
     @Override
     public void beerOrderPickedUp(UUID id) {
         Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(id);
 
         beerOrderOptional.ifPresentOrElse(beerOrder -> {
-            //do process
+            //send a BEERORDER_PICKED_UP event into the state machine
             sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.BEERORDER_PICKED_UP);
         }, () -> log.error("Order Not Found. Id: " + id));
     }

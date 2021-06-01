@@ -37,6 +37,10 @@ public interface BeerOrderRepository  extends JpaRepository<BeerOrder, UUID> {
 
     List<BeerOrder> findAllByOrderStatus(BeerOrderStatusEnum orderStatusEnum);
 
+    // debugging for 2 hours, method was returning nothing - but it was intermittent 
+    // - so problem couldn't be solved,
+    // The Spring Data generated findById worked fine.
+    // Thinks the UUID property with H2 in memory DB behaves differently compared to MySQL 
    // @Lock(LockModeType.PESSIMISTIC_WRITE)
    // BeerOrder findOneById(UUID id);
 }

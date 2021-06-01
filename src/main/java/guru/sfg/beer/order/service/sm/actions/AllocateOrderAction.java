@@ -37,9 +37,13 @@ public class AllocateOrderAction implements Action<BeerOrderStatusEnum, BeerOrde
 
         beerOrderOptional.ifPresentOrElse(beerOrder -> {
                     jmsTemplate.convertAndSend(JmsConfig.ALLOCATE_ORDER_QUEUE,
+                            // send out the AllocateOrderRequest
                             AllocateOrderRequest.builder()
                             .beerOrderDto(beerOrderMapper.beerOrderToDto(beerOrder))
-                            .build());
+                            // don't forget build(), got a cryptic error in console without it:
+                            // org.springframework.jms.support.converter.MessageConversionException: 
+                            // Could not map JSON object [AllocateOrderRequest.AllocateOrderRequestBuilder ..
+                            .build()); 
                     log.debug("Sent Allocation Request for order id: " + beerOrderId);
                 }, () -> log.error("Beer Order Not Found!"));
     }

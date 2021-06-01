@@ -42,6 +42,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
                 .event(BeerOrderEventEnum.VALIDATE_ORDER)
                 .action(validateOrderAction)
            .and().withExternal()
+                // correction - source VALIDATION_PENDING>transition added 
                 .source(BeerOrderStatusEnum.VALIDATION_PENDING).target(BeerOrderStatusEnum.VALIDATED)
                 .event(BeerOrderEventEnum.VALIDATION_PASSED)
            .and().withExternal()
@@ -61,6 +62,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
                 .source(BeerOrderStatusEnum.ALLOCATION_PENDING).target(BeerOrderStatusEnum.PENDING_INVENTORY)
                 .event(BeerOrderEventEnum.ALLOCATION_NO_INVENTORY)
            .and().withExternal()
+                // handle BEERORDER_PICKED_UP event, we only need to transition the status from ALLOCATED to PICKED_UP
                 .source(BeerOrderStatusEnum.ALLOCATED).target(BeerOrderStatusEnum.PICKED_UP)
                 .event(BeerOrderEventEnum.BEERORDER_PICKED_UP);
 

@@ -15,6 +15,7 @@ import java.util.UUID;
 @ConfigurationProperties(prefix = "sfg.brewery", ignoreUnknownFields = false)
 @Service
 public class BeerServiceImpl implements BeerService {
+    // Strings set to static
     public final static String BEER_PATH_V1 = "/api/v1/beer/";
     public final static String BEER_UPC_PATH_V1 = "/api/v1/beerUpc/";
     private final RestTemplate restTemplate;
@@ -30,6 +31,10 @@ public class BeerServiceImpl implements BeerService {
         return Optional.of(restTemplate.getForObject(beerServiceHost + BEER_PATH_V1 + uuid.toString(), BeerDto.class));
     }
 
+
+    // we get a null pointer exception in our test>the rest template is calling out + not getting a valid response.
+    // I'm returning back a null>because we don't have a web service for it> we need WireMock?? 
+    // Maybe this comment was written before WireMock was brought in?
     @Override
     public Optional<BeerDto> getBeerByUpc(String upc) {
         return Optional.of(restTemplate.getForObject(beerServiceHost + BEER_UPC_PATH_V1 + upc, BeerDto.class));

@@ -20,24 +20,45 @@
 
 
     <dependencies>
+        <!-- An integration test should be self-contained, use an embedded broker that runs in the test context
+        (an external broker is needed for a running application)>
+        artemis-jms-server dependency>test scope means the dependency only brought in the test context> 
+        Spring Boot will automatically configure it.  
+        Errors - no activemq in the console?  Maven window>Reload All Maven Projects. -->
         <dependency>
             <groupId>org.apache.activemq</groupId>
             <artifactId>artemis-jms-server</artifactId>
             <scope>test</scope>
         </dependency>
+        <!--  add wiremock dependency -->
         <dependency>
             <groupId>com.github.JensPiegsa</groupId>
             <artifactId>wiremock-extension</artifactId>
             <version>0.4.0</version>
             <scope>test</scope>
         </dependency>
+        <!-- Tool that you can use in your Tests where you wait for a condition 
+             when you start dealing with message driven systems, it's very common to be using it 
+             - don't use sleeps.
+        
+             https://github.com/awaitility/awaitility
+
+             Examples how to add:- 
+             https://github.com/awaitility/awaitility/wiki/Getting_started
+        
+             Usage examples:- 
+             https://github.com/awaitility/awaitility/wiki/Usage -->
         <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
+            <!-- run only in the context of our test -->
             <scope>test</scope>
         </dependency>
     </dependencies>
 
+    <!--  wiremock is not available in maven central 
+    (config. below is off the wiremock extension webpage), 
+    we need an additional repository -->
     <repositories>
         <repository>
             <id>jitpack.io</id>

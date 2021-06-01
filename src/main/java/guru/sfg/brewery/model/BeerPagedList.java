@@ -14,6 +14,7 @@ import java.util.List;
 /**
  * Created by jt on 2019-05-12.
  */
+// copied + pasted from ssc-beer-service\src\main\java\guru\sfg\brewery\model\BeerPagedList.java, it actually wasn't needed
 public class BeerPagedList extends PageImpl<BeerDto> implements Serializable {
 
     static final long serialVersionUID = 1114715135625836949L;
