@@ -18,6 +18,9 @@
 package guru.sfg.beer.order.service.domain;
 
 public enum BeerOrderStatusEnum {
+    // new CANCELLED status, we could make this more elegant we could do something like: cancelled pending, 
+    // allocated and a cancel exception - a more realistic lifecycle. 
+    // We are focusing on just getting a compensating transaction out. 
     NEW, VALIDATED, VALIDATION_PENDING, VALIDATION_EXCEPTION,
     ALLOCATION_PENDING, ALLOCATED, ALLOCATION_EXCEPTION, CANCELLED,
     PENDING_INVENTORY, PICKED_UP, DELIVERED, DELIVERY_EXCEPTION

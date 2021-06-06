@@ -24,6 +24,7 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 @Component
+// this class was mostly a copy of AllocateOrderAction
 public class DeallocateOrderAction implements Action<BeerOrderStatusEnum, BeerOrderEventEnum> {
 
     private final JmsTemplate jmsTemplate;
@@ -37,8 +38,14 @@ public class DeallocateOrderAction implements Action<BeerOrderStatusEnum, BeerOr
 
         beerOrderOptional.ifPresentOrElse(beerOrder -> {
             jmsTemplate.convertAndSend(JmsConfig.DEALLOCATE_ORDER_QUEUE,
+                    // this DeallocateOrderRequest is similar to AllocateOrderRequest.
+                    // We're seeing a pattern of these requests objects being very similar. 
+                    // Some people would reuse the same object + then just say a message type on that. 
+                    // From experience JT prefers having separate POJOs for specific events. 
+                    // Normally these objects in a more realistic system, will grow to be different.
                     DeallocateOrderRequest.builder()
-                            .beerOrderDto(beerOrderMapper.beerOrderToDto(beerOrder))
+                            // converts from domain object to DTO object
+                            .beerOrderDto(beerOrderMapper.beerOrderToDto(beerOrder)) 
                             .build());
             log.debug("Sent Deallocation Request for order id: " + beerOrderId);
         }, () -> log.error("Beer Order Not Found!"));

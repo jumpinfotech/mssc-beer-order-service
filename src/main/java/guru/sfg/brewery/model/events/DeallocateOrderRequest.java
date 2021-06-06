@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+// was copied from AllocateOrderRequest 
 public class DeallocateOrderRequest {
     private BeerOrderDto beerOrderDto;
 }

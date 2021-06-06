@@ -14,6 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+// this is the POJO that we send out to the JMS Queue
 public class AllocationFailureEvent {
     private UUID orderId;
 }

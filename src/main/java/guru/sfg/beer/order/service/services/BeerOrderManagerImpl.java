@@ -51,15 +51,26 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     public void processValidationResult(UUID beerOrderId, Boolean isValid) {
         log.debug("Process Validation Result for beerOrderId: " + beerOrderId + " Valid? " + isValid);
 
-        Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrderId);
+        // Thought there was a race condition. 
+        // In BeerOrderStateChangeInterceptor.preStateChange() we have beerOrderRepository.saveAndFlush(beerOrder)
+        // In this class we had field private final EntityManager entityManager; brought in by Spring context 
+        // We have @Transactional for this method 
+        // entityManager.flush(); - used this to make sure the session is flushed out 
+        // i.e. we are not waiting for something to be persisted to the database
+        // entityManager.flush(); - is no longer needed we are using awaitForStatus below.
 
+        Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrderId);
         beerOrderOptional.ifPresentOrElse(beerOrder -> {
             if(isValid){
+                // send the VALIDATION_PASSED event message to the Spring State Machine>
+                // an interceptor is then triggered to save the state in the database
                 sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.VALIDATION_PASSED);
 
-                //wait for status change
+                // wait for the database status to update>
+                // give that database lock time to release 
                 awaitForStatus(beerOrderId, BeerOrderStatusEnum.VALIDATED);
 
+                // without the awaitForStatus, we were getting a not found error here intermittently
                 BeerOrder validatedOrder = beerOrderRepository.findById(beerOrderId).get();
 
                 sendBeerOrderEvent(validatedOrder, BeerOrderEventEnum.ALLOCATE_ORDER);
@@ -76,6 +87,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
 
         beerOrderOptional.ifPresentOrElse(beerOrder -> {
             sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.ALLOCATION_SUCCESS);
+            // wait for the database to catch up
             awaitForStatus(beerOrder.getId(), BeerOrderStatusEnum.ALLOCATED);
             updateAllocatedQty(beerOrderDto);
         }, () -> log.error("Order Id Not Found: " + beerOrderDto.getId() ));
@@ -87,6 +99,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
 
         beerOrderOptional.ifPresentOrElse(beerOrder -> {
             sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.ALLOCATION_NO_INVENTORY);
+            // wait for the database to catch up
             awaitForStatus(beerOrder.getId(), BeerOrderStatusEnum.PENDING_INVENTORY);
             updateAllocatedQty(beerOrderDto);
         }, () -> log.error("Order Id Not Found: " + beerOrderDto.getId() ));
@@ -129,10 +142,13 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         }, () -> log.error("Order Not Found. Id: " + id));
     }
 
+    // similar to beerOrderPickedUp
     @Override
     public void cancelOrder(UUID id) {
         beerOrderRepository.findById(id).ifPresentOrElse(beerOrder -> {
+            // cancel BeerOrder - we send CANCEL_ORDER event
             sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.CANCEL_ORDER);
+            // log error if no BeerOrder is found
         }, () -> log.error("Order Not Found. Id: " + id));
     }
 
@@ -146,21 +162,28 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         sm.sendEvent(msg);
     }
 
+    // JT took this from a Josh Long video, simpler than the Spring State Machine project options.
+    // Maybe not the best approach.
+    // Similar to awaitility which we use in testing - we won't bring that into production code.
     private void awaitForStatus(UUID beerOrderId, BeerOrderStatusEnum statusEnum) {
-
+        // statusEnum = expected status
         AtomicBoolean found = new AtomicBoolean(false);
         AtomicInteger loopCount = new AtomicInteger(0);
 
+        // while it's not found
         while (!found.get()) {
-            if (loopCount.incrementAndGet() > 10) {
+            // go through 10 times, the number 10 should be externalised
+            if (loopCount.incrementAndGet() > 10) { 
                 found.set(true);
                 log.debug("Loop Retries exceeded");
             }
 
             beerOrderRepository.findById(beerOrderId).ifPresentOrElse(beerOrder -> {
-                if (beerOrder.getOrderStatus().equals(statusEnum)) {
+                // looking for BeerOrder with that status
+                if (beerOrder.getOrderStatus().equals(statusEnum)) { 
+                    // release loop when BeerOrder matches expected status
                     found.set(true);
-                    log.debug("Order Found");
+                    log.debug("Order Found"); 
                 } else {
                     log.debug("Order Status Not Equal. Expected: " + statusEnum.name() + " Found: " + beerOrder.getOrderStatus().name());
                 }
@@ -170,13 +193,16 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
 
             if (!found.get()) {
                 try {
-                    log.debug("Sleeping for retry");
+                    log.debug("Sleeping for retry"); 
+                    // sometimes it goes through a couple of sleep cycles, 
+                    // system sleeps for 1 second maximum
                     Thread.sleep(100);
                 } catch (Exception e) {
                     // do nothing
                 }
             }
         }
+    // If JT needed to do this often he'd examine the persistence options inside the Springs State Machine project. 
     }
 
     private StateMachine<BeerOrderStatusEnum, BeerOrderEventEnum> build(BeerOrder beerOrder){

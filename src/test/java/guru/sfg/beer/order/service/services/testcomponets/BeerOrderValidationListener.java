@@ -16,20 +16,27 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @RequiredArgsConstructor
 @Component
+// Added the capability to say it is not a valid order>previously we always returned isValid=true
+// Can't we use Mockito? We are bringing up the JMS broker, we have a full JMS environment>this is a JMS listener test component. 
 public class BeerOrderValidationListener {
     private final JmsTemplate jmsTemplate;
 
     @JmsListener(destination = JmsConfig.VALIDATE_ORDER_QUEUE)
     public void list(Message msg){
-        boolean isValid = true;
+        // new variable
+        boolean isValid = true; 
+        // new send response variable
         boolean sendResponse = true;
 
         ValidateOrderRequest request = (ValidateOrderRequest) msg.getPayload();
-
-        //condition to fail validation
+        // null check added as some tests were failing
         if (request.getBeerOrder().getCustomerRef() != null) {
+            // ValidateOrderRequest is now examined for some keys
+            // ideally fail-validation string would be externalised
             if (request.getBeerOrder().getCustomerRef().equals("fail-validation")){
+                //condition to fail validation
                 isValid = false;
+            // a dont-validate CustomerRef means the response should not be sent    
             } else if (request.getBeerOrder().getCustomerRef().equals("dont-validate")){
                 sendResponse = false;
             }

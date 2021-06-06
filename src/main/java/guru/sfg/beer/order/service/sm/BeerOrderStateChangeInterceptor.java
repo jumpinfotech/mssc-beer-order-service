@@ -31,6 +31,7 @@ public class BeerOrderStateChangeInterceptor extends StateMachineInterceptorAdap
     @Transactional
     @Override
     public void preStateChange(State<BeerOrderStatusEnum, BeerOrderEventEnum> state, Message<BeerOrderEventEnum> message, Transition<BeerOrderStatusEnum, BeerOrderEventEnum> transition, StateMachine<BeerOrderStatusEnum, BeerOrderEventEnum> stateMachine) {
+        // this method can be seen running in the console just before BeerOrderManagerImpl.processValidationResult
         log.debug("Pre-State Change");
 
         Optional.ofNullable(message)

@@ -59,6 +59,8 @@ public class BeerOrderManagerImplIT {
     @Autowired
     WireMockServer wireMockServer;
 
+    // @SpringBootTest means we have access to the full Spring context, 
+    // the JmsTemplate is going to be in the context, we just bring it in:-
     @Autowired
     JmsTemplate jmsTemplate;
 
@@ -115,6 +117,7 @@ public class BeerOrderManagerImplIT {
         });
     }
 
+    // this test also triggers the event VALIDATION_FAILED which calls the action ValidationFailureAction.execute(.. 
     @Test
     void testFailedValidation() throws JsonProcessingException {
         BeerDto beerDto = BeerDto.builder().id(beerId).upc("12345").build();
@@ -123,13 +126,14 @@ public class BeerOrderManagerImplIT {
                 .willReturn(okJson(objectMapper.writeValueAsString(beerDto))));
 
         BeerOrder beerOrder = createBeerOrder();
+        // added fail-validation as a key to fail validation
         beerOrder.setCustomerRef("fail-validation");
 
         BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
 
         await().untilAsserted(() -> {
             BeerOrder foundOrder = beerOrderRepository.findById(beerOrder.getId()).get();
-
+            // should transition to VALIDATION_EXCEPTION
             assertEquals(BeerOrderStatusEnum.VALIDATION_EXCEPTION, foundOrder.getOrderStatus());
         });
     }
@@ -162,6 +166,7 @@ public class BeerOrderManagerImplIT {
         assertEquals(BeerOrderStatusEnum.PICKED_UP, pickedUpOrder.getOrderStatus());
     }
 
+    // tests are for test coverage which validate the Spring State Machine configuration for different paths of the SAGA
     @Test
     void testAllocationFailure() throws JsonProcessingException {
         BeerDto beerDto = BeerDto.builder().id(beerId).upc("12345").build();
@@ -170,18 +175,26 @@ public class BeerOrderManagerImplIT {
                 .willReturn(okJson(objectMapper.writeValueAsString(beerDto))));
 
         BeerOrder beerOrder = createBeerOrder();
+        // added fail-allocation as a key to fail allocation, 
+        // passing along a value for the test condition I want to test,
+        // here I test fail-allocation
         beerOrder.setCustomerRef("fail-allocation");
 
         BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
 
         await().untilAsserted(() -> {
             BeerOrder foundOrder = beerOrderRepository.findById(beerOrder.getId()).get();
+            // expect ALLOCATION_EXCEPTION
             assertEquals(BeerOrderStatusEnum.ALLOCATION_EXCEPTION, foundOrder.getOrderStatus());
         });
+        // when running the test in the console we see AllocationFailureEvent was sent to the ALLOCATE_FAILURE_QUEUE
+        // AllocationFailureAction : Sent Allocation Failure Message to queue for order id £197fde8-d91b-485c-ab71-754d3623effc
 
+        // receiveAndConvert>just brings back an object from JMS - we cast it to AllocationFailureEvent
         AllocationFailureEvent allocationFailureEvent = (AllocationFailureEvent) jmsTemplate.receiveAndConvert(JmsConfig.ALLOCATE_FAILURE_QUEUE);
 
         assertNotNull(allocationFailureEvent);
+        // the AllocationFailureEvent POJO contains the orderId of the beer that we saved
         assertThat(allocationFailureEvent.getOrderId()).isEqualTo(savedBeerOrder.getId());
     }
 
@@ -193,14 +206,18 @@ public class BeerOrderManagerImplIT {
                 .willReturn(okJson(objectMapper.writeValueAsString(beerDto))));
 
         BeerOrder beerOrder = createBeerOrder();
+        // added partial-allocation as a key to partial allocation
         beerOrder.setCustomerRef("partial-allocation");
 
         BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
 
         await().untilAsserted(() -> {
             BeerOrder foundOrder = beerOrderRepository.findById(beerOrder.getId()).get();
+            // expect PENDING_INVENTORY
             assertEquals(BeerOrderStatusEnum.PENDING_INVENTORY, foundOrder.getOrderStatus());
         });
+        // used when building the test to make sure it runs red
+        // assertEquals(1,2);
     }
 
     @Test
@@ -211,37 +228,45 @@ public class BeerOrderManagerImplIT {
                 .willReturn(okJson(objectMapper.writeValueAsString(beerDto))));
 
         BeerOrder beerOrder = createBeerOrder();
+        // dont-validate set so no response is sent.
         beerOrder.setCustomerRef("dont-validate");
 
+        // saves the order
         BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
 
+        // wait until we get VALIDATION_PENDING
         await().untilAsserted(() -> {
             BeerOrder foundOrder = beerOrderRepository.findById(beerOrder.getId()).get();
             assertEquals(BeerOrderStatusEnum.VALIDATION_PENDING, foundOrder.getOrderStatus());
         });
 
+        // when we are in status VALIDATION_PENDING we call cancel
         beerOrderManager.cancelOrder(savedBeerOrder.getId());
 
         await().untilAsserted(() -> {
             BeerOrder foundOrder = beerOrderRepository.findById(beerOrder.getId()).get();
+            // wait for status CANCELLED
             assertEquals(BeerOrderStatusEnum.CANCELLED, foundOrder.getOrderStatus());
         });
     }
 
     @Test
     void testAllocationPendingToCancel() throws JsonProcessingException {
+        // identical to test testValidationPendingToCancel, except:-
         BeerDto beerDto = BeerDto.builder().id(beerId).upc("12345").build();
 
         wireMockServer.stubFor(get(BeerServiceImpl.BEER_UPC_PATH_V1 + "12345")
                 .willReturn(okJson(objectMapper.writeValueAsString(beerDto))));
 
         BeerOrder beerOrder = createBeerOrder();
+        // dont-allocate
         beerOrder.setCustomerRef("dont-allocate");
 
         BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
 
         await().untilAsserted(() -> {
             BeerOrder foundOrder = beerOrderRepository.findById(beerOrder.getId()).get();
+            // ALLOCATION_PENDING
             assertEquals(BeerOrderStatusEnum.ALLOCATION_PENDING, foundOrder.getOrderStatus());
         });
 
@@ -255,27 +280,33 @@ public class BeerOrderManagerImplIT {
 
     @Test
     void testAllocatedToCancel() throws JsonProcessingException {
+        // Validates Spring State Machine configuration + we send out a compensating transaction
         BeerDto beerDto = BeerDto.builder().id(beerId).upc("12345").build();
 
         wireMockServer.stubFor(get(BeerServiceImpl.BEER_UPC_PATH_V1 + "12345")
                 .willReturn(okJson(objectMapper.writeValueAsString(beerDto))));
 
+        // create a new order through the happy path, get it to an ALLOCATED status
         BeerOrder beerOrder = createBeerOrder();
 
         BeerOrder savedBeerOrder = beerOrderManager.newBeerOrder(beerOrder);
 
         await().untilAsserted(() -> {
             BeerOrder foundOrder = beerOrderRepository.findById(beerOrder.getId()).get();
+            // ALLOCATED, allocated normally
             assertEquals(BeerOrderStatusEnum.ALLOCATED, foundOrder.getOrderStatus());
         });
 
+        // we send a CANCEL_ORDER event for the BeerOrder 
         beerOrderManager.cancelOrder(savedBeerOrder.getId());
 
         await().untilAsserted(() -> {
             BeerOrder foundOrder = beerOrderRepository.findById(beerOrder.getId()).get();
+            // wait until status is CANCELLED
             assertEquals(BeerOrderStatusEnum.CANCELLED, foundOrder.getOrderStatus());
         });
 
+        // use JmsTemplate to listen on the JMS DEALLOCATE_ORDER_QUEUE Queue, making sure DeallocateOrderRequest is sent 
         DeallocateOrderRequest deallocateOrderRequest = (DeallocateOrderRequest) jmsTemplate.receiveAndConvert(JmsConfig.DEALLOCATE_ORDER_QUEUE);
 
         assertNotNull(deallocateOrderRequest);

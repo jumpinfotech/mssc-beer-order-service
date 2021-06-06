@@ -16,7 +16,11 @@ public class JmsConfig {
     public static final String VALIDATE_ORDER_RESPONSE_QUEUE = "validate-order-response";
     public static final String ALLOCATE_ORDER_QUEUE = "allocate-order";
     public static final String ALLOCATE_ORDER_RESPONSE_QUEUE = "allocate-order-response";
+    // some people like to externalise these properties, 
+    // in case the queue names will change between systems - debatable,
+    // the queue name needs to be unique
     public static final String ALLOCATE_FAILURE_QUEUE = "allocation-failure";
+    // stays consistent, we had allocate-order
     public static final String DEALLOCATE_ORDER_QUEUE = "deallocate-order" ;
 
     @Bean // Serialize message content to json using TextMessage
