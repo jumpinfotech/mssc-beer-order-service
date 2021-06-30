@@ -8,6 +8,7 @@ import java.util.List;
 /**
  * Created by jt on 3/7/20.
  */
+// newly created, like the BeerOrderPagedList pattern we applied
 public class CustomerPagedList extends PageImpl<CustomerDto> {
     public CustomerPagedList(List<CustomerDto> content, Pageable pageable, long total) {
         super(content, pageable, total);

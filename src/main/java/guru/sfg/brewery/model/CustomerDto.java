@@ -47,6 +47,7 @@ public class CustomerDto {
     @JsonProperty("lastModifiedDate")
     private OffsetDateTime lastModifiedDate = null;
 
+    // renamed from name to match the entity, so mapstruct would work
     private String customerName;
 
 }

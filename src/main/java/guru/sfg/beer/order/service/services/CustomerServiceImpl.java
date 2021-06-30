@@ -24,9 +24,11 @@ public class CustomerServiceImpl implements CustomerService {
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
 
+    // similar to BeerOrderServiceImpl.listOrders(...
     @Override
     public CustomerPagedList listCustomers(Pageable pageable) {
 
+        // get a list of customers using pageable
         Page<Customer> customerPage = customerRepository.findAll(pageable);
 
         return new CustomerPagedList(customerPage

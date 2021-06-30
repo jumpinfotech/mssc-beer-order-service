@@ -7,6 +7,8 @@ import org.mapstruct.Mapper;
 /**
  * Created by jt on 3/7/20.
  */
+// map from a Customer domain object to a CustomerDto, 
+// which will be used within the controller response
 @Mapper(uses = {DateMapper.class})
 public interface CustomerMapper {
     CustomerDto customerToDto(Customer customer);

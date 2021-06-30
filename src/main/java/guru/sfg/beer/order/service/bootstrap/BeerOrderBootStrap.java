@@ -29,7 +29,10 @@ public class BeerOrderBootStrap implements CommandLineRunner {
     }
 
     private void loadCustomerData() {
+        // I had a customer in there, but not a TASTING_ROOM customer (we support multiple customers) so this was refactored:-
+        //  if (customerRepository.count() == 0) { to:
         if (customerRepository.findAllByCustomerNameLike(BeerOrderBootStrap.TASTING_ROOM) .size() == 0) {
+            // if TASTING_ROOM customer isn't found create one, replaced save with saveAndFlush also. 
             Customer savedCustomer = customerRepository.saveAndFlush(Customer.builder()
                     .customerName(TASTING_ROOM)
                     .apiKey(UUID.randomUUID())

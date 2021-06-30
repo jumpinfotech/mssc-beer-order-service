@@ -37,6 +37,7 @@ public class TastingRoomService {
     }
 
     @Transactional
+    // bug fix this was commented out by mistake
     @Scheduled(fixedRate = 2000) //run every 2 seconds
     public void placeTastingRoomOrder(){
 
@@ -46,7 +47,7 @@ public class TastingRoomService {
             doPlaceOrder(customerList.get(0));
         } else {
             log.error("Too many or too few tasting room customers found");
-
+            // I had some customers in there, but the tasting room customer was not getting loaded
             customerList.forEach(customer -> log.debug(customer.toString()));
         }
     }
